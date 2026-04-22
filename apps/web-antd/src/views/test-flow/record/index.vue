@@ -10,13 +10,21 @@ import type { TestRecord } from '#/api';
 import { computed, ref } from 'vue';
 
 import { JsonViewer, Page, useVbenDrawer } from '@vben/common-ui';
-import { useIsMobile } from '@vben-core/composables';
+import { downloadFileFromBlob } from '@vben/utils';
 import { $t } from '@vben/locales';
+import { message } from 'ant-design-vue';
+
+import { useIsMobile } from '@vben-core/composables';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
-import { getTestRecordListApi } from '#/api';
+import { exportTestRecordsApi, getTestRecordListApi } from '#/api';
 
-import { querySchema, testResultOptions, testStepMap, useColumns } from './data';
+import {
+  querySchema,
+  testResultOptions,
+  testStepMap,
+  useColumns,
+} from './data';
 
 const formOptions: VbenFormProps = {
   collapsed: true,
@@ -58,7 +66,7 @@ const gridOptions: VxeTableGridOptions<TestRecord> = {
   },
 };
 
-const [Grid] = useVbenVxeGrid({
+const [Grid, gridApi] = useVbenVxeGrid({
   formOptions,
   gridOptions,
 });
@@ -72,11 +80,29 @@ function onActionClick({ code, row }: OnActionClickParams<TestRecord>) {
   }
 }
 
+// 导出 Excel
+async function handleExport() {
+  try {
+    const formValues = await gridApi.formApi?.getValues?.() ?? {};
+    const blob = await exportTestRecordsApi({
+      pid: formValues.pid,
+      product_tag: formValues.product_tag,
+      test_result: formValues.test_result,
+    });
+    const fileName = `test_records_${Date.now()}.xlsx`;
+    downloadFileFromBlob({ fileName, source: blob });
+    message.success('导出成功');
+  } catch (error) {
+    message.error('导出失败');
+    console.error(error);
+  }
+}
+
 // 响应式检测：小屏幕（md < 768px）时使用单列布局
 const { isMobile } = useIsMobile();
 
 // 动态计算 Descriptions 列数：小屏幕单列，大屏幕双列
-const descriptionsColumn = computed(() => isMobile.value ? 1 : 2);
+const descriptionsColumn = computed(() => (isMobile.value ? 1 : 2));
 
 // Drawer 宽度响应式：默认40%，lg(1024px)以上用33%
 // 内置 isMobile 机制会在 md(<768px) 时自动变为 w-full
@@ -89,11 +115,16 @@ const [Drawer, drawerApi] = useVbenDrawer({
 const recordDetails = ref<TestRecord>();
 
 function testResultLabel(value: number): string {
-  return testResultOptions.find((option) => option.value === value)?.label ?? '未知';
+  return (
+    testResultOptions.find((option) => option.value === value)?.label ?? '未知'
+  );
 }
 
 function testResultColor(value: number): string {
-  return testResultOptions.find((option) => option.value === value)?.color ?? 'default';
+  return (
+    testResultOptions.find((option) => option.value === value)?.color ??
+    'default'
+  );
 }
 
 function testStepLabel(value: number): string {
@@ -103,6 +134,11 @@ function testStepLabel(value: number): string {
 
 <template>
   <Page auto-content-height>
+    <div class="mb-4 flex gap-2">
+      <a-button type="primary" @click="handleExport">
+        导出 Excel
+      </a-button>
+    </div>
     <Grid />
     <Drawer title="测试记录详情">
       <a-descriptions
