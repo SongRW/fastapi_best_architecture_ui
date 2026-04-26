@@ -1,10 +1,12 @@
+import type { ComputedRef, Ref } from 'vue';
+
 import type { VbenFormSchema } from '#/adapter/form';
 import type {
   OnActionClickFn,
   OnActionClickParams,
   VxeGridProps,
 } from '#/adapter/vxe-table';
-import type { SysRoleResult, SysUserResult } from '#/api';
+import type { SysDeptTreeResult, SysRoleResult, SysUserResult } from '#/api';
 
 import { $t } from '@vben/locales';
 
@@ -29,16 +31,6 @@ export const querySchema: VbenFormSchema[] = [
     component: 'Select',
     componentProps: {
       allowClear: true,
-      // options: [
-      //   {
-      //     label: '正常',
-      //     value: 1,
-      //   },
-      //   {
-      //     label: '禁用',
-      //     value: 0,
-      //   },
-      // ],
       options: getDictOptions(DictEnum.SYS_STATUS),
       placeholder: $t('common.form.select'),
     },
@@ -207,7 +199,17 @@ export function useColumns(
   ];
 }
 
-export function useEditSchema(roleSelectOptions: any): VbenFormSchema[] {
+/**
+ * 编辑用户表单 Schema
+ * @param roleSelectOptions 角色选择选项
+ * @param isDeptAdmin 是否为部门管理员
+ * @param deptTreeData 部门树数据（用于部门管理员时确保选项可用）
+ */
+export function useEditSchema(
+  roleSelectOptions: any,
+  isDeptAdmin?: ComputedRef<boolean>,
+  deptTreeData?: Ref<SysDeptTreeResult[]>,
+): VbenFormSchema[] {
   return [
     {
       component: 'Input',
@@ -237,14 +239,31 @@ export function useEditSchema(roleSelectOptions: any): VbenFormSchema[] {
       label: '邮箱',
     },
     {
-      component: 'ApiTreeSelect',
-      componentProps: {
-        allowClear: true,
-        api: getSysDeptTreeApi,
-        class: 'w-full',
-        labelField: 'name',
-        valueField: 'id',
-        childrenField: 'children',
+      // 部门管理员时使用普通 TreeSelect，否则使用 ApiTreeSelect
+      component: isDeptAdmin?.value ? 'TreeSelect' : 'ApiTreeSelect',
+      componentProps: () => {
+        // 部门管理员时使用预加载的部门树数据
+        if (isDeptAdmin?.value) {
+          return {
+            allowClear: false,
+            class: 'w-full',
+            fieldNames: { label: 'name', value: 'id', children: 'children' },
+            treeData: deptTreeData?.value || [],
+            disabled: true,
+            placeholder: '',
+          };
+        }
+        // 超级管理员时使用 ApiTreeSelect 动态加载
+        return {
+          allowClear: true,
+          api: getSysDeptTreeApi,
+          class: 'w-full',
+          labelField: 'name',
+          valueField: 'id',
+          childrenField: 'children',
+          resultField: 'data',
+          disabled: false,
+        };
       },
       fieldName: 'dept_id',
       label: '所属部门',
@@ -269,7 +288,17 @@ export function useEditSchema(roleSelectOptions: any): VbenFormSchema[] {
   ];
 }
 
-export function useAddSchema(roleSelectOptions: any): VbenFormSchema[] {
+/**
+ * 添加用户表单 Schema
+ * @param roleSelectOptions 角色选择选项
+ * @param isDeptAdmin 是否为部门管理员
+ * @param deptTreeData 部门树数据（用于部门管理员时确保选项可用）
+ */
+export function useAddSchema(
+  roleSelectOptions: any,
+  isDeptAdmin?: ComputedRef<boolean>,
+  deptTreeData?: Ref<SysDeptTreeResult[]>,
+): VbenFormSchema[] {
   return [
     {
       component: 'Input',
@@ -299,14 +328,31 @@ export function useAddSchema(roleSelectOptions: any): VbenFormSchema[] {
       label: '邮箱',
     },
     {
-      component: 'ApiTreeSelect',
-      componentProps: {
-        allowClear: true,
-        api: getSysDeptTreeApi,
-        class: 'w-full',
-        labelField: 'name',
-        valueField: 'id',
-        childrenField: 'children',
+      // 部门管理员时使用普通 TreeSelect，否则使用 ApiTreeSelect
+      component: isDeptAdmin?.value ? 'TreeSelect' : 'ApiTreeSelect',
+      componentProps: () => {
+        // 部门管理员时使用预加载的部门树数据
+        if (isDeptAdmin?.value) {
+          return {
+            allowClear: false,
+            class: 'w-full',
+            fieldNames: { label: 'name', value: 'id', children: 'children' },
+            treeData: deptTreeData?.value || [],
+            disabled: true,
+            placeholder: '',
+          };
+        }
+        // 超级管理员时使用 ApiTreeSelect 动态加载
+        return {
+          allowClear: true,
+          api: getSysDeptTreeApi,
+          class: 'w-full',
+          labelField: 'name',
+          valueField: 'id',
+          childrenField: 'children',
+          resultField: 'data',
+          disabled: false,
+        };
       },
       fieldName: 'dept_id',
       label: '所属部门',
