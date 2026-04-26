@@ -196,7 +196,7 @@ const [Modal, modalApi] = useVbenModal({
               class="size-full"
             />
           </div>
-          <span class="ml-1 flex-auto">{{ row.title }}</span>
+          <span class="ml-1 flex-auto">{{ row.translatedTitle || row.title }}</span>
         </div>
       </template>
     </Grid>
