@@ -108,7 +108,7 @@ const [Form, formApi] = useVbenForm({
 });
 
 interface formSysRoleParams extends CreateSysRoleParams {
-  id?: number;
+  id?: string;
 }
 
 const formData = ref<formSysRoleParams>();
@@ -154,13 +154,13 @@ const [Drawer, drawerApi] = useVbenDrawer({
   connectedComponent: ExtraDrawer,
 });
 
-const openDrawer = async (pk: number) => {
+const openDrawer = async (pk: string) => {
   try {
     const roleMenu = await getSysRoleMenuApi(pk);
     drawerApi
       .setData({
         pk,
-        checkedRoleMenu: traverseTreeValues(roleMenu, (item: any) => item.id),
+        checkedRoleMenu: traverseTreeValues(roleMenu, (item) => item.id),
       })
       .open();
   } catch (error) {

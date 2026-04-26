@@ -14,7 +14,7 @@ import type {
   SysUserResult,
 } from '#/api';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import { ColPage, useVbenModal, VbenButton } from '@vben/common-ui';
 import { MaterialSymbolsAdd } from '@vben/icons';
@@ -28,7 +28,8 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   createSysUserApi,
   deleteSysUserApi,
-  getAllSysRoleApi,
+  getAssignableRolesApi,
+  getDeptAdminStatusApi,
   getSysDeptTreeApi,
   getSysUserListApi,
   resetSysUserPasswordApi,
@@ -41,6 +42,44 @@ import {
   useColumns,
   useEditSchema,
 } from '#/views/system/user/data';
+
+/**
+ * 部门管理员状态
+ */
+interface DeptAdminState {
+  isDeptAdmin: boolean;
+  deptId?: string; // Snowflake ID
+  maxRoleLevel?: number;
+}
+
+/**
+ * 部门管理员状态（从API获取）
+ */
+const deptAdminState = ref<DeptAdminState>({
+  isDeptAdmin: false,
+});
+
+/**
+ * 是否显示添加用户按钮
+ * - 超级管理员：始终显示
+ * - 部门管理员：显示
+ * - 普通用户：隐藏
+ */
+const showAddUserBtn = computed(() => {
+  // TODO: 可根据 userStore.userRoles 判断是否为超级管理员
+  // 目前先返回 true，后续可结合后端返回的状态判断
+  return true;
+});
+
+/**
+ * 是否为部门管理员
+ */
+const isDeptAdmin = computed(() => deptAdminState.value.isDeptAdmin);
+
+/**
+ * 部门管理员所属部门ID
+ */
+const deptAdminDeptId = computed(() => deptAdminState.value.deptId);
 
 /**
  * 左侧
@@ -137,7 +176,7 @@ function onActionClick({ code, row }: OnActionClickParams<SysUserResult>) {
   }
 }
 
-const fetchSysUserListByDept = (selectedKeys: number[]) => {
+const fetchSysUserListByDept = (selectedKeys: string[]) => {
   try {
     gridApi.query({ dept: selectedKeys[0] });
   } catch (error) {
@@ -146,9 +185,30 @@ const fetchSysUserListByDept = (selectedKeys: number[]) => {
 };
 
 const roleSelectOptions = ref<SysRoleResult[]>([]);
-const fetchAllSysRole = async () => {
+
+/**
+ * 获取可分配角色列表
+ * 部门管理员只能分配权限等级不高于自己的角色
+ */
+const fetchAssignableRoles = async () => {
   try {
-    roleSelectOptions.value = await getAllSysRoleApi();
+    roleSelectOptions.value = await getAssignableRolesApi();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+/**
+ * 获取部门管理员状态
+ */
+const fetchDeptAdminStatus = async () => {
+  try {
+    const result = await getDeptAdminStatusApi();
+    deptAdminState.value = {
+      isDeptAdmin: result.is_dept_admin,
+      deptId: result.dept_id,
+      maxRoleLevel: result.max_role_level,
+    };
   } catch (error) {
     console.error(error);
   }
@@ -156,10 +216,9 @@ const fetchAllSysRole = async () => {
 
 const [EditForm, formApi] = useVbenForm({
   showDefaultActions: false,
-  schema: useEditSchema(roleSelectOptions),
+  schema: useEditSchema(roleSelectOptions, isDeptAdmin, treeData),
 });
-
-const editUser = ref<number>(0);
+const editUser = ref<string>('');
 
 const [editModal, editModalApi] = useVbenModal({
   destroyOnClose: true,
@@ -187,15 +246,18 @@ const [editModal, editModalApi] = useVbenModal({
           roles: data.roles?.map((item: SysRoleResult) => item.id) || [],
         });
       }
+      // 部门管理员时确保部门ID正确设置
+      if (isDeptAdmin.value && deptAdminDeptId.value) {
+        formApi.setValues({ dept_id: deptAdminDeptId.value });
+      }
     }
   },
 });
 
 const [AddForm, addFormApi] = useVbenForm({
   showDefaultActions: false,
-  schema: useAddSchema(roleSelectOptions),
+  schema: useAddSchema(roleSelectOptions, isDeptAdmin, treeData),
 });
-
 const [addModal, addModalApi] = useVbenModal({
   destroyOnClose: true,
   async onConfirm() {
@@ -216,6 +278,10 @@ const [addModal, addModalApi] = useVbenModal({
     if (isOpen) {
       const data = addModalApi.getData();
       addFormApi.resetForm();
+      // 部门管理员时预设部门ID
+      if (isDeptAdmin.value && deptAdminDeptId.value) {
+        addFormApi.setValues({ dept_id: deptAdminDeptId.value });
+      }
       if (data) {
         addFormApi.setValues(data);
       }
@@ -259,7 +325,8 @@ const [resetPwdModal, resetPwdModalApi] = useVbenModal({
 
 onMounted(() => {
   fetchDeptTree(undefined);
-  fetchAllSysRole();
+  fetchAssignableRoles();
+  fetchDeptAdminStatus();
 });
 </script>
 
@@ -309,7 +376,10 @@ onMounted(() => {
     </template>
     <Grid>
       <template #toolbar-actions>
-        <VbenButton @click="() => addModalApi.setData(null).open()">
+        <VbenButton
+          v-if="showAddUserBtn"
+          @click="() => addModalApi.setData(null).open()"
+        >
           <MaterialSymbolsAdd class="size-5" />
           添加用户
         </VbenButton>

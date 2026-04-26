@@ -33,7 +33,11 @@
     "sysMenu": "菜单管理",
     "sysRole": "角色管理",
     "sysUser": "用户管理",
-    "profile": "个人中心"
+    "profile": "个人中心",
+    "baselineManagement": "基线管理",
+    "baselineConfigItem": "工况配置项管理",
+    "projectBaseline": "项目基线管理",
+    "projectBaselineV2": "产品基线配置V2"
   },
   "monitor": {
     "redis": {

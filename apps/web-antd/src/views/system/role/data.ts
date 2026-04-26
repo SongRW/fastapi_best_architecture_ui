@@ -1,6 +1,6 @@
 import type { VbenFormSchema } from '#/adapter/form';
 import type { OnActionClickFn, VxeGridProps } from '#/adapter/vxe-table';
-import type { SysRoleResult } from '#/api';
+import type { SysDataScopeResult, SysRoleResult } from '#/api';
 
 import { $t } from '@vben/locales';
 
@@ -16,16 +16,6 @@ export const querySchema: VbenFormSchema[] = [
     component: 'Select',
     componentProps: {
       allowClear: true,
-      // options: [
-      //   {
-      //     label: '已启用',
-      //     value: 1,
-      //   },
-      //   {
-      //     label: '已停用',
-      //     value: 0,
-      //   },
-      // ],
       options: getDictOptions(DictEnum.SYS_STATUS),
     },
     fieldName: 'status',
@@ -45,14 +35,15 @@ export function useColumns(
     },
     { field: 'name', title: '角色名称' },
     {
+      field: 'level',
+      title: '角色等级',
+      width: 100,
+    },
+    {
       field: 'is_filter_scopes',
       title: '过滤数据权限',
       cellRender: {
         name: 'CellTag',
-        // options: [
-        //   { color: 'success', label: $t('common.enabled'), value: true },
-        //   { color: 'error', label: $t('common.disabled'), value: false },
-        // ],
         options: getDictOptions(DictEnum.SYS_CHOOSE),
       },
     },
@@ -96,7 +87,7 @@ export function useColumns(
           {
             code: 'delete',
             disabled: (row: SysRoleResult) => {
-              return row.id === 1;
+              return row.id === '1';
             },
           },
         ],
@@ -113,13 +104,20 @@ export const schema: VbenFormSchema[] = [
     rules: 'required',
   },
   {
+    component: 'InputNumber',
+    fieldName: 'level',
+    label: '角色等级',
+    componentProps: {
+      min: 0,
+      max: 999,
+      placeholder: '数值越大权限越高',
+    },
+    help: '等级高的用户可以创建等级低的用户',
+  },
+  {
     component: 'RadioGroup',
     componentProps: {
       buttonStyle: 'solid',
-      // options: [
-      //   { label: $t('common.enabled'), value: true },
-      //   { label: $t('common.disabled'), value: false },
-      // ],
       options: getDictOptions(DictEnum.SYS_CHOOSE),
       optionType: 'button',
     },
@@ -132,10 +130,6 @@ export const schema: VbenFormSchema[] = [
     component: 'RadioGroup',
     componentProps: {
       buttonStyle: 'solid',
-      // options: [
-      //   { label: $t('common.enabled'), value: 1 },
-      //   { label: $t('common.disabled'), value: 0 },
-      // ],
       options: getDictOptions(DictEnum.SYS_STATUS),
       optionType: 'button',
     },
@@ -172,13 +166,6 @@ export const drawerColumns: VxeGridProps['columns'] = [
     title: '类型',
     cellRender: {
       name: 'CellTag',
-      // options: [
-      //   { color: 'orange', label: '目录', value: 0 },
-      //   { color: 'default', label: '菜单', value: 1 },
-      //   { color: 'blue', label: '按钮', value: 2 },
-      //   { color: 'warning', label: '内嵌', value: 3 },
-      //   { color: 'success', label: '外链', value: 4 },
-      // ],
       options: getDictOptions(DictEnum.SYS_MENU_TYPE),
     },
   },
@@ -187,7 +174,7 @@ export const drawerColumns: VxeGridProps['columns'] = [
 ];
 
 export function drawerDataScopeColumns(
-  onActionClick?: OnActionClickFn<SysRoleResult>,
+  onActionClick?: OnActionClickFn<SysDataScopeResult>,
 ): VxeGridProps['columns'] {
   return [
     {

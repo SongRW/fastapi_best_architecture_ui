@@ -5,7 +5,7 @@ import type { SysDeptResult, SysRoleResult } from '#/api';
 import { requestClient } from '#/api/request';
 
 export interface MyUserInfo extends UserInfo {
-  id: number;
+  id: string;  // Snowflake ID
   nickname: string;
   email?: string;
   phone?: string;
@@ -14,9 +14,9 @@ export interface MyUserInfo extends UserInfo {
 }
 
 export interface SysUserResult {
-  id: number;
+  id: string;  // Snowflake ID
   uuid: string;
-  dept_id?: number;
+  dept_id?: string;  // Snowflake ID
   username: string;
   nickname: string;
   email?: string;
@@ -33,7 +33,7 @@ export interface SysUserResult {
 }
 
 export interface SysUserParams {
-  dept?: number;
+  dept?: string;  // Snowflake ID
   username?: string;
   phone?: string;
   status?: number;
@@ -42,13 +42,13 @@ export interface SysUserParams {
 }
 
 export interface SysUpdateUserParams {
-  dept_id?: number;
+  dept_id?: string;  // Snowflake ID
   username: string;
   nickname: string;
   avatar?: string;
   email?: string;
   phone?: string;
-  roles: number[];
+  roles: string[];  // Snowflake IDs
 }
 
 export interface SysAddUserParams extends SysUpdateUserParams {
@@ -84,6 +84,21 @@ export interface SysResetPasswordParams {
 }
 
 /**
+ * 部门管理员状态信息
+ */
+export interface DeptAdminStatus {
+  /** 是否为部门管理员 */
+  is_dept_admin: boolean;
+  /** 部门ID（部门管理员所属部门） */
+  dept_id?: string;  // Snowflake ID
+  /** 最大可分配角色等级 */
+  max_role_level?: number;
+}
+
+export async function getDeptAdminStatusApi() {
+  return requestClient.get<DeptAdminStatus>('/api/v1/sys/users/me/dept-admin');
+}
+/**
  * 获取用户信息
  */
 export async function getUserInfoApi() {
@@ -98,11 +113,11 @@ export async function createSysUserApi(data: SysAddUserParams) {
   return requestClient.post('/api/v1/sys/users', data);
 }
 
-export async function updateSysUserApi(pk: number, data: SysUpdateUserParams) {
+export async function updateSysUserApi(pk: string, data: SysUpdateUserParams) {
   return requestClient.put(`/api/v1/sys/users/${pk}`, data);
 }
 
-export async function updateSysUserPermissionApi(pk: number, type: string) {
+export async function updateSysUserPermissionApi(pk: string, type: string) {
   return requestClient.put(`/api/v1/sys/users/${pk}/permissions`, undefined, {
     params: { type },
     paramsSerializer: 'repeat',
@@ -131,12 +146,12 @@ export async function updateSysUserPasswordApi(data: SysUpdatePasswordParams) {
 }
 
 export async function resetSysUserPasswordApi(
-  pk: number,
+  pk: string,
   data: SysResetPasswordParams,
 ) {
   return requestClient.put(`/api/v1/sys/users/${pk}/password`, data);
 }
 
-export async function deleteSysUserApi(pk: number) {
+export async function deleteSysUserApi(pk: string) {
   return requestClient.delete(`/api/v1/sys/users/${pk}`);
 }

@@ -114,7 +114,7 @@ const [Form, formApi] = useVbenForm({
 });
 
 interface formSysDeptParams extends SysDeptParams {
-  id?: number;
+  id?: string;
 }
 
 const formData = ref<formSysDeptParams>();
@@ -149,7 +149,7 @@ const [Modal, modalApi] = useVbenModal({
       const data = modalApi.getData<formSysDeptParams>();
       formApi.resetForm();
       if (data) {
-        if (data.parent_id === 0) {
+        if (data.parent_id === '0') {
           data.parent_id = undefined;
         }
         formData.value = data;

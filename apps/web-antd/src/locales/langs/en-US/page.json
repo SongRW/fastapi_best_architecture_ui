@@ -33,7 +33,11 @@
     "sysMenu": "User",
     "sysRole": "Role",
     "sysUser": "User",
-    "profile": "Profile"
+    "profile": "Profile",
+    "baselineManagement": "Baseline Management",
+    "baselineConfigItem": "Config Item Management",
+    "projectBaseline": "Project Baseline",
+    "projectBaselineV2": "Project Baseline V2"
   },
   "monitor": {
     "redis": {

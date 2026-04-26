@@ -33,6 +33,7 @@ const externalRoutes: RouteRecordRaw[] = [];
 const routes: RouteRecordRaw[] = [
   ...coreRoutes,
   ...externalRoutes,
+  ...staticRoutes,
   fallbackNotFoundRoute,
 ];
 

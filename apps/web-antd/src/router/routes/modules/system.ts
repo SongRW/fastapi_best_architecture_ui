@@ -87,6 +87,25 @@ const routes: RouteRecordRaw[] = [
           icon: 'clarity:plugin-line',
         },
       },
+      {
+        name: 'SysCidSegment',
+        path: '/system/cid-segment',
+        component: () => import('#/views/system/cid-segment/index.vue'),
+        meta: {
+          title: 'CID号段管理',
+          icon: 'mdi:numeric',
+        },
+      },
+
+      {
+        name: 'SysWorkOrder',
+        path: '/system/work-order',
+        component: () => import('#/views/system/work-order/index.vue'),
+        meta: {
+          title: '工单管理',
+          icon: 'mdi:clipboard-list',
+        },
+      },
     ],
   },
 ];
