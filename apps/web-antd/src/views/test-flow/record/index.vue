@@ -10,11 +10,11 @@ import type { TestRecord } from '#/api';
 import { computed, ref } from 'vue';
 
 import { JsonViewer, Page, useVbenDrawer } from '@vben/common-ui';
-import { downloadFileFromBlob } from '@vben/utils';
+import { useIsMobile } from '@vben/hooks';
 import { $t } from '@vben/locales';
-import { message } from 'ant-design-vue';
+import { downloadFileFromBlob } from '@vben/utils';
 
-import { useIsMobile } from '@vben-core/composables';
+import { message } from 'ant-design-vue';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { exportTestRecordsApi, getTestRecordListApi } from '#/api';
@@ -83,7 +83,7 @@ function onActionClick({ code, row }: OnActionClickParams<TestRecord>) {
 // 导出 Excel
 async function handleExport() {
   try {
-    const formValues = await gridApi.formApi?.getValues?.() ?? {};
+    const formValues = (await gridApi.formApi?.getValues?.()) ?? {};
     const blob = await exportTestRecordsApi({
       pid: formValues.pid,
       product_tag: formValues.product_tag,
@@ -135,9 +135,7 @@ function testStepLabel(value: number): string {
 <template>
   <Page auto-content-height>
     <div class="mb-4 flex gap-2">
-      <a-button type="primary" @click="handleExport">
-        导出 Excel
-      </a-button>
+      <a-button type="primary" @click="handleExport"> 导出 Excel </a-button>
     </div>
     <Grid />
     <Drawer title="测试记录详情">

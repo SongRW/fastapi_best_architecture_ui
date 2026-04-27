@@ -45,7 +45,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (activeKey.value === '0') {
       const indeterminateRows = gridApi.grid.getCheckboxIndeterminateRecords();
       const checkedRows = gridApi.grid.getCheckboxRecords(true);
-      updateSysRoleMenuApi(clickRow.value, [
+      updateSysRoleMenuApi(String(clickRow.value), [
         ...indeterminateRows.map((item: any) => item.id),
         ...checkedRows.map((item: any) => item.id),
       ]).then(() => {
@@ -55,7 +55,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     } else {
       const checkedRows = dataScopeGridApi.grid.getCheckboxRecords(true);
       updateSysRoleDataScopesApi(
-        clickRow.value,
+        String(clickRow.value),
         checkedRows.map((item: any) => item.id),
       ).then(() => {
         message.success($t('ui.actionMessage.operationSuccess'));
@@ -197,7 +197,7 @@ function onActionClick({ code, row }: OnActionClickParams<SysDataScopeResult>) {
 watch(activeKey, async (newValue) => {
   if (newValue === '1') {
     defaultCheckedDataScopesKeys.value = await getSysRoleDataScopesApi(
-      clickRow.value,
+      String(clickRow.value),
     );
     dataScopeGridApi.setGridOptions({
       checkboxConfig: {

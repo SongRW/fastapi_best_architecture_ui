@@ -1,9 +1,9 @@
 import { requestClient } from './request';
 
 export interface SysDeptResult {
-  id: string;  // Snowflake ID
+  id: string; // Snowflake ID
   name: string;
-  parent_id: string;  // Snowflake ID
+  parent_id: string; // Snowflake ID
   sort: number;
   leader?: string;
   phone?: string;
@@ -11,7 +11,7 @@ export interface SysDeptResult {
   status: number;
   created_time: string;
   /** 部门管理员用户ID */
-  dept_admin_id?: string;  // Snowflake ID
+  dept_admin_id?: string; // Snowflake ID
   /** 是否为外部部门（客户） */
   is_external?: boolean;
   /** BOSS 系统 App ID */
@@ -34,14 +34,14 @@ export interface SysDeptTreeResult extends SysDeptResult {
 
 export interface SysDeptParams {
   name: string;
-  parent_id?: string;  // Snowflake ID
+  parent_id?: string; // Snowflake ID
   sort?: number;
   leader?: string;
   phone?: string;
   email?: string;
   status: number;
   /** 部门管理员用户ID */
-  dept_admin_id?: string;  // Snowflake ID
+  dept_admin_id?: string; // Snowflake ID
   /** 是否为外部部门（客户） */
   is_external?: boolean;
   /** BOSS 系统 App ID */
