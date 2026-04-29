@@ -125,6 +125,7 @@ async function onRefresh() {
 
 interface FormData extends ConfigItemCreate {
   id?: string;
+  is_required?: boolean;
 }
 
 const formData = ref<FormData>();
@@ -143,6 +144,7 @@ function buildUpdatePayload(data: FormData): ConfigItemUpdate {
     config_key: data.config_key.trim(),
     config_name: data.config_name.trim(),
     default_value: data.default_value?.trim() || null,
+    is_required: data.is_required ?? true,
     product_tag: data.product_tag.trim(),
     rule_expression: data.rule_expression ?? null,
     rule_value: data.rule_value?.trim() || null,
@@ -211,6 +213,7 @@ const [ModalComponent, modalApi] = useVbenModal({
             config_key: data.config_key.trim(),
             config_name: data.config_name.trim(),
             default_value: data.default_value?.trim() || null,
+            is_required: data.is_required ?? true,
             product_tag: data.product_tag.trim(),
             rule_expression: data.rule_expression ?? null,
             rule_value: data.rule_value?.trim() || null,
@@ -238,6 +241,7 @@ const [ModalComponent, modalApi] = useVbenModal({
       config_key: data?.config_key ?? '',
       config_name: data?.config_name ?? '',
       default_value: data?.default_value ?? '',
+      is_required: data?.is_required ?? true,
       product_tag: data?.product_tag ?? '',
       rule_expression: data?.rule_expression ?? null,
       rule_value: data?.rule_value ?? '',

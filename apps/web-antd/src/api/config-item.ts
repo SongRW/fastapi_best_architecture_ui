@@ -22,6 +22,7 @@ export interface ConfigItemResult {
   created_time: string;
   default_value: null | string;
   id: string;
+  is_required: boolean;
   product_tag: string;
   remark: null | string;
   rule_expression: null | number;
@@ -36,6 +37,7 @@ export interface ConfigItemCreate {
   config_key: string;
   config_name: string;
   default_value?: null | string;
+  is_required?: boolean;
   product_tag: string;
   remark?: null | string;
   rule_expression?: null | number;
@@ -49,6 +51,7 @@ export interface ConfigItemUpdate {
   config_key?: string;
   config_name?: string;
   default_value?: null | string;
+  is_required?: boolean;
   product_tag?: string;
   remark?: null | string;
   rule_expression?: null | number;

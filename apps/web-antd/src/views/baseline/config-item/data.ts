@@ -60,6 +60,12 @@ export function useColumns(
     { field: 'value_type', title: '值类型', width: 100 },
     { field: 'sort_order', title: '排序', width: 80 },
     {
+      field: 'is_required',
+      title: '是否必检',
+      width: 100,
+      formatter: ({ cellValue }) => (cellValue ? '必检' : '可选'),
+    },
+    {
       field: 'rule_expression',
       title: '规则表达式',
       minWidth: 180,
@@ -179,6 +185,17 @@ export const schema: VbenFormSchema[] = [
         { label: '对象', value: 'object' },
       ],
       placeholder: '请选择值类型',
+      style: { width: '100%' },
+    },
+  },
+  {
+    component: 'Switch',
+    fieldName: 'is_required',
+    label: '是否必检',
+    defaultValue: true,
+    componentProps: {
+      checkedChildren: '必检',
+      unCheckedChildren: '可选',
     },
   },
   {

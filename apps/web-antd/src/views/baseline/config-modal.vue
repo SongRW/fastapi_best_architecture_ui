@@ -17,6 +17,7 @@ import {
   Input,
   InputNumber,
   message,
+  Select,
   Spin,
   Switch,
   Tag,
@@ -28,6 +29,17 @@ import {
   getProductBaselineByIdApi,
   updateProductBaselineApi,
 } from '#/api/product-baseline';
+
+const RULE_EXPRESSION_OPTIONS = [
+  { label: '等于 (==)', value: 0 },
+  { label: '不等于 (!=)', value: 1 },
+  { label: '大于 (>)', value: 2 },
+  { label: '大于等于 (>=)', value: 3 },
+  { label: '小于 (<)', value: 4 },
+  { label: '小于等于 (<=)', value: 5 },
+  { label: '包含 (in)', value: 6 },
+  { label: '不包含 (not_in)', value: 7 },
+] as const;
 
 interface RangeValue {
   max: null | number;
@@ -63,7 +75,7 @@ interface ConfigItem {
   config_key: string;
   group_name: string;
   is_required: boolean;
-  rule_expression: string;
+  rule_expression: null | number | string;
   sort_order: number;
   value: EditableValue;
   value_type: PresetValueType;
@@ -122,7 +134,7 @@ function mapConfigItemToPreset(item: ConfigItemResult): PresetConfigItem {
     condition_name: item.config_name,
     config_key: item.config_key,
     group_name: item.product_tag || '默认分组',
-    is_required: true,
+    is_required: item.is_required ?? true,
     placeholders: buildPlaceholders(item.config_name),
     rule_expression: item.rule_expression,
     rule_value: item.rule_value ?? item.default_value,
@@ -172,6 +184,13 @@ const selectedConfigList = computed(() => {
     .map((conditionId) => itemMap.get(conditionId))
     .filter((item): item is ConfigItem => item !== null && item !== undefined);
 });
+
+function coerceNumber(value: unknown): null | number {
+  if (typeof value === 'number') return value;
+  if (value === null || value === undefined) return null;
+  const num = Number(value);
+  return Number.isNaN(num) ? null : num;
+}
 
 function inferValueType(value: unknown): PresetValueType {
   if (typeof value === 'boolean') {
@@ -329,14 +348,31 @@ function createConfigItemFromPreset(preset: PresetConfigItem): ConfigItem {
 function resolveRuleExpression(
   conditionRule: null | number | string | undefined,
   presetRule: null | number | undefined,
-): string {
+): null | number {
   if (conditionRule !== null && conditionRule !== undefined) {
-    return String(conditionRule);
+    const num = Number(conditionRule);
+    return Number.isNaN(num) ? null : num;
   }
   if (presetRule !== null && presetRule !== undefined) {
-    return String(presetRule);
+    return presetRule;
   }
-  return '';
+  return null;
+}
+
+function resolveConditionValue(
+  condition: ConditionItem,
+  valueType: PresetValueType,
+  fallbackValue: ConfigItem['value'],
+): ConfigItem['value'] {
+  if (valueType === 'number-range') {
+    return normalizeRangeValue(condition.value);
+  }
+  if (valueType === 'number') {
+    return coerceNumber(condition.value) ?? fallbackValue;
+  }
+  return (
+    (condition.value as boolean | null | string | undefined) ?? fallbackValue
+  );
 }
 
 function buildConfigItem(condition: ConditionItem, index: number): ConfigItem {
@@ -360,11 +396,7 @@ function buildConfigItem(condition: ConditionItem, index: number): ConfigItem {
       preset?.rule_expression,
     ),
     sort_order: condition.sort_order ?? index,
-    value:
-      valueType === 'number-range'
-        ? normalizeRangeValue(condition.value)
-        : ((condition.value as boolean | null | number | string | undefined) ??
-          presetDefault.value),
+    value: resolveConditionValue(condition, valueType, presetDefault.value),
     value_type: valueType,
   };
 }
@@ -392,7 +424,11 @@ function sanitizeValue(item: ConfigItem): ConditionItem['value'] {
     return Object.keys(normalizedValue).length > 0 ? normalizedValue : null;
   }
   if (item.value_type === 'number') {
-    return typeof item.value === 'number' ? item.value : null;
+    if (typeof item.value === 'number') {
+      return item.value;
+    }
+    const num = Number(item.value);
+    return Number.isNaN(num) ? null : num;
   }
   if (item.value_type === 'boolean') {
     return typeof item.value === 'boolean' ? item.value : false;
@@ -413,7 +449,10 @@ function buildPayload(list: ConfigItem[]) {
             config_key: item.config_key,
             group_name: item.group_name,
             is_required: item.is_required,
-            rule_expression: item.rule_expression.trim() || null,
+            rule_expression:
+              typeof item.rule_expression === 'number'
+                ? item.rule_expression
+                : null,
             sort_order: index + 1,
             value: sanitizeValue(item),
           })),
@@ -521,6 +560,15 @@ function moveConfigItem(conditionId: string, direction: -1 | 1) {
   targetKeys.value = nextList.map((item) => item.condition_id);
 }
 
+function updateRuleExpression(conditionId: string, value: number | undefined) {
+  const target = configList.value.find(
+    (item) => item.condition_id === conditionId,
+  );
+  if (target) {
+    target.rule_expression = value ?? null;
+  }
+}
+
 function updateNumberValue(conditionId: string, value: null | number) {
   const target = configList.value.find(
     (item) => item.condition_id === conditionId,
@@ -562,6 +610,15 @@ function updateBooleanValue(conditionId: string, checked: boolean) {
   );
   if (target) {
     target.value = checked;
+  }
+}
+
+function updateRequired(conditionId: string, checked: boolean) {
+  const target = configList.value.find(
+    (item) => item.condition_id === conditionId,
+  );
+  if (target) {
+    target.is_required = checked;
   }
 }
 
@@ -668,6 +725,15 @@ const [Modal, modalApi] = useVbenModal({
                     >顺序: {{ config.sort_order }}</span
                   >
                   <div class="ml-auto flex items-center gap-2">
+                    <span class="text-xs text-gray-500">必检</span>
+                    <Switch
+                      :checked="config.is_required"
+                      size="small"
+                      @change="
+                        (checked: boolean | number | string) =>
+                          updateRequired(config.condition_id, checked === true)
+                      "
+                    />
                     <Button
                       :disabled="config.sort_order === 1"
                       size="small"
@@ -688,16 +754,20 @@ const [Modal, modalApi] = useVbenModal({
                 </div>
 
                 <div class="grid grid-cols-[220px_1fr] gap-3">
-                  <Input
-                    :value="config.rule_expression || ''"
-                    placeholder="请输入规则表达式"
+                  <Select
+                    :value="
+                      typeof config.rule_expression === 'number'
+                        ? config.rule_expression
+                        : undefined
+                    "
+                    :options="RULE_EXPRESSION_OPTIONS"
+                    allow-clear
+                    placeholder="请选择规则表达式"
                     size="small"
+                    style="width: 100%"
                     @change="
-                      (e: Event) => {
-                        config.rule_expression = (
-                          e.target as HTMLInputElement
-                        ).value;
-                      }
+                      (value: number | undefined) =>
+                        updateRuleExpression(config.condition_id, value)
                     "
                   />
 
@@ -746,7 +816,9 @@ const [Modal, modalApi] = useVbenModal({
                     :value="
                       typeof config.value === 'number'
                         ? config.value
-                        : undefined
+                        : config.value != null
+                          ? Number(config.value) || undefined
+                          : undefined
                     "
                     :placeholder="
                       getPreset(config.condition_id)?.placeholders?.[0] ??
