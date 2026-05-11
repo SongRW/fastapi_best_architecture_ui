@@ -426,11 +426,7 @@ function buildConfigItem(condition: ConditionItem, index: number): ConfigItem {
       preset?.rule_expression,
     ),
     sort_order: condition.sort_order ?? index,
-    value: resolveConditionValue(
-      condition,
-      valueType,
-      getDefaultValue(preset),
-    ),
+    value: resolveConditionValue(condition, valueType, getDefaultValue(preset)),
     value_type: valueType,
   };
 }

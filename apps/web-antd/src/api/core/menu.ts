@@ -36,8 +36,8 @@ function normalizeLegacyMenuName(name: string) {
   return legacyMenuNameMap[name] ?? name;
 }
 
-function normalizeLegacyMenuPath(path: string) {
-  return path.replace(/^\/gm(?=\/|$)/, '/baseline');
+function normalizeLegacyMenuPath(path: null | string) {
+  return path?.replace(/^\/gm(?=\/|$)/, '/baseline') ?? '';
 }
 
 function normalizeLegacyComponent(component: string): string;

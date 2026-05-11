@@ -198,7 +198,6 @@ const [Modal, modalApi] = useVbenModal({
 
     modalApi.lock();
     const params: CreateProductBaselineParams = {
-      conditions: [],
       dept_ids:
         formData.value.dept_ids.length > 0 ? formData.value.dept_ids : null,
       product_name: formData.value.product_name.trim(),
